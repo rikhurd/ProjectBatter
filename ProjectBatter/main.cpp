@@ -8,14 +8,16 @@
 typedef enum GameState { TITLE, GAME } GameState;
 
 // 
-struct Level
+typedef struct Level
 {
     Mesh levelMesh;
     Model levelModel;
-    Vector2 spawnPointPlayer = { 0,0 };
-    Vector2 spawnPointEnemy = { 0,0 };
+    Vector3 spawnPointPlayer = { 0,0,0 };
+    Vector3 spawnPointEnemy = { 0,0,0 };
     Vector3 levelPosition = { -8.0f, 0.0f, -8.0f };
-};
+
+} Level;
+
 struct LevelSpawnColors
 {
     /*
@@ -129,9 +131,28 @@ int main(void)
 
             DrawModel(levelData.levelModel, levelData.levelPosition, 1.0f, WHITE);
 
+            DrawCylinder(levelData.spawnPointPlayer, 0.5f, 0.5f, 1, 4, GREEN);
+            DrawCylinder(levelData.spawnPointEnemy, 0.5f, 0.5f, 1, 4, RED);
+
+
         EndMode3D();
 
-        DrawText("PRESS ENTER",  GetScreenWidth() / 3, GetScreenHeight() / 4, 32, MAROON);
+        switch (currentGameState)
+        {
+        case TITLE:
+        {
+            DrawText("PRESS ENTER", GetScreenWidth() / 3, GetScreenHeight() / 4, 32, MAROON);
+
+        } break;
+        case GAME:
+        {
+
+
+        } break;
+        default: break;
+        }
+
+
 
         DrawFPS(10, 10);
 
@@ -141,7 +162,6 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    // UnloadTexture(cubicmap);    // Unload cubicmap texture
     UnloadTexture(texture);     // Unload map texture
     UnloadModel(levelData.levelModel);         // Unload map model
 
@@ -174,15 +194,25 @@ static Level GetLevelData(Image heightMap, Color playerSpawnPointColor, Color en
 
                 if (ColorToInt(pixelColor) == ColorToInt(playerSpawnPointColor))
                 {
-                    // Found a spawning point, store its position. Casting int into float
-                    tempLevelData.spawnPointPlayer = { float(x),float(y) };
+                    // Found a spawning point, calculate its 3D position with level position. Store its position. Casting int into float
 
-                    // When spawn point found recolor image back into BLACK so mesh generation later will find the spawn point as something the player can stand on.
+                    tempLevelData.spawnPointPlayer = {
+                        (float(x) + tempLevelData.levelPosition.x),
+                        (tempLevelData.levelPosition.y),
+                        (float(y) + tempLevelData.levelPosition.z)
+                    };
+
+                    // When spawn point found recolor image back into BLACK so mesh generation later will find the spawn point as something the player can stand on. If the pixel is not Black or White the ground the mesh will have hole in the position where the spawn point is.
                     ImageDrawPixel(&heightMap, x, y, BLACK);
                 }
                 else if (ColorToInt(pixelColor) == ColorToInt(enemySpawnPointColor))
                 {
-                    tempLevelData.spawnPointEnemy = { float(x),float(y) };
+                    tempLevelData.spawnPointEnemy = {
+                        (float(x) + tempLevelData.levelPosition.x),
+                        (tempLevelData.levelPosition.y),
+                        (float(y) + tempLevelData.levelPosition.z)
+                    };
+
                     ImageDrawPixel(&heightMap, x, y, BLACK);
                 }
             }
