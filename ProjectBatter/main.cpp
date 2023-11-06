@@ -28,14 +28,16 @@ struct LevelSpawnColors
         Color variables are: Red, Green, Blue, Alpha (Transparency | 255 = Non-transparent, 0 = Full transparency)
     */
 
-    Color playerSpawnPointColor = { 0,255,0,255 };
-    Color enemySpawnPointColor = { 255,0,0,255 };
+    const Color playerSpawnPointColor = { 0,255,0,255 };
+    const Color enemySpawnPointColor = { 255,0,0,255 };
 
     // raylib has set colors for RED and GREEN, but they are not as easily set in third party tool than max green or red values.
 };
 
 // Function declaration
 static Level GetLevelData(Image heightMap, Color playerSpawnPointColor, Color enemySpawnPointColor);
+
+static Camera SwitchCameraType(GameState currentGameState);
 static void InitPlayerCharacter();
 
 int main(void)
@@ -50,13 +52,13 @@ int main(void)
 
     GameState currentGameState = TITLE;
 
-    // Define the camera to look into our 3d world
-    Camera camera = { 0 };
-    camera.position = { 16.0f, 16.0f, 16.0f };     // Camera position
-    camera.target = { 0.0f, 0.0f, 0.0f };          // Camera looking at point
-    camera.up = { 0.0f, 1.0f, 0.0f };              // Camera up vector (rotation towards target)
-    camera.fovy = 45.0f;                                    // Camera field-of-view Y
-    camera.projection = CAMERA_PERSPECTIVE;                 // Camera projection type
+    /* 
+    *   Define the camera to look into our 3d world.
+    *   Camera is defined by GameState.
+            Title   - is rotating camera to show the level
+            Game    - follows player character
+    */
+    Camera camera = SwitchCameraType(currentGameState);
 
     // Load image and turn it into Cubicmap
     Image heightMap = LoadImage("resources/levels/Level1T.png");      // Load image (RAM)
@@ -79,12 +81,6 @@ int main(void)
     Texture2D texture = LoadTexture("resources/textures/tileTexturePH.png");    // Load map texture
     levelData.levelModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;    // Set map diffuse texture
 
-    // Define player variables here
-
-    //Player location is from spawnPointPlayer
-    Vector3 playerSize = { 1.0f, 2.0f, 1.0f };
-    Color playerColor = GREEN;
-
     UnloadImage(heightMap);     // Unload cubesmap image from RAM, already uploaded to VRAM
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
@@ -105,6 +101,9 @@ int main(void)
                 if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
                 {
                     currentGameState = GAME;
+
+                    // Set new camera variables here so it would be called only once and not updated each frame
+                    camera = SwitchCameraType(currentGameState);
                 }
             } break;
             case GAME:
@@ -131,25 +130,27 @@ int main(void)
 
             DrawModel(levelData.levelModel, levelData.levelPosition, 1.0f, WHITE);
 
-            DrawCylinder(levelData.spawnPointPlayer, 0.5f, 0.5f, 1, 4, GREEN);
-            DrawCylinder(levelData.spawnPointEnemy, 0.5f, 0.5f, 1, 4, RED);
+            DrawCube(levelData.spawnPointPlayer, 1, 1, 1, GREEN);
+
+            DrawCube(levelData.spawnPointEnemy, 1, 1, 1, RED);
 
 
         EndMode3D();
 
         switch (currentGameState)
         {
-        case TITLE:
-        {
-            DrawText("PRESS ENTER", GetScreenWidth() / 3, GetScreenHeight() / 4, 32, MAROON);
+            case TITLE:
+            {
 
-        } break;
-        case GAME:
-        {
+                DrawText("PRESS ENTER", GetScreenWidth() / 3, GetScreenHeight() / 4, 32, MAROON);
+
+            } break;
+            case GAME:
+            {
 
 
-        } break;
-        default: break;
+            } break;
+            default: break;
         }
 
 
@@ -169,6 +170,35 @@ int main(void)
     //--------------------------------------------------------------------------------------
 
     return 0;
+}
+
+Camera SwitchCameraType(GameState currentGameState)
+{
+    Camera tempCamera = { 0 };
+
+    switch (currentGameState)
+    {
+        case TITLE:
+        {
+            tempCamera.position = { 16.0f, 16.0f, 16.0f };     // Camera position
+            tempCamera.target = { 0.0f, 0.0f, 0.0f };          // Camera looking at point
+            tempCamera.up = { 0.0f, 1.0f, 0.0f };              // Camera up vector (rotation towards target)
+            tempCamera.fovy = 45.0f;                                    // Camera field-of-view Y
+            //tempCamera.projection = CAMERA_PERSPECTIVE;                 // Camera projection type
+
+        } break;
+        case GAME:
+        {
+            tempCamera.position = { 16.0f, 16.0f, 16.0f };     // Camera position
+            tempCamera.target = { 0.0f, 0.0f, 0.0f };          // Camera looking at point
+            tempCamera.up = { 0.0f, 1.0f, 0.0f };              // Camera up vector (rotation towards target)
+            tempCamera.fovy = 45.0f;                                    // Camera field-of-view Y
+            //tempCamera.projection = CAMERA_THIRD_PERSON;                 // Camera projection type
+
+        } break;
+        default: break;
+    }
+    return tempCamera;
 }
 
 static void InitPlayerCharacter()
