@@ -3,13 +3,13 @@
 
 #include <iostream>
 #include "raylib.h"
+#include "Character.h"
 
 // Structure definition
 typedef enum GameState { TITLE, GAME } GameState;
 
 // 
-typedef struct Level
-{
+typedef struct Level {
     Mesh levelMesh;
     Model levelModel;
     Vector3 spawnPointPlayer = { 0,0,0 };
@@ -18,8 +18,7 @@ typedef struct Level
 
 } Level;
 
-struct LevelSpawnColors
-{
+struct LevelSpawnColors {
     /*
     Get colors of spawning points
         Player is pure Green
@@ -38,10 +37,8 @@ struct LevelSpawnColors
 static Level GetLevelData(Image heightMap, Color playerSpawnPointColor, Color enemySpawnPointColor);
 
 static Camera SwitchCameraType(GameState currentGameState);
-static void InitPlayerCharacter();
 
-int main(void)
-{
+int main(void) {
     // Initialization
     //--------------------------------------------------------------------------------------
     // Game screen size
@@ -83,35 +80,30 @@ int main(void)
 
     UnloadImage(heightMap);     // Unload cubesmap image from RAM, already uploaded to VRAM
 
+    std::unique_ptr<PlayerCharacter> player = std::make_unique<PlayerCharacter>(levelData.spawnPointPlayer);
+
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    while (!WindowShouldClose())        // Detect window close button or ESC key
-    {
+    while (!WindowShouldClose()) {         // Detect window close button or ESC key
         // Update
         //----------------------------------------------------------------------------------
 
-        switch (currentGameState)
-        {
-            case TITLE:
-            {
+        switch (currentGameState) {
+            case TITLE: {
                 UpdateCamera(&camera, CAMERA_ORBITAL);
 
-                if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP))
-                {
+                if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP)) {
                     currentGameState = GAME;
 
                     // Set new camera variables here so it would be called only once and not updated each frame
                     camera = SwitchCameraType(currentGameState);
+                    DisableCursor();
                 }
             } break;
-            case GAME:
-            {
+            case GAME: {
                 UpdateCamera(&camera, CAMERA_THIRD_PERSON);
-                DisableCursor();
-
-                InitPlayerCharacter();
 
             } break;
             default: break;
@@ -137,13 +129,10 @@ int main(void)
 
         EndMode3D();
 
-        switch (currentGameState)
-        {
-            case TITLE:
-            {
+        switch (currentGameState) {
+            case TITLE: {
 
                 DrawText("PRESS ENTER", GetScreenWidth() / 3, GetScreenHeight() / 4, 32, MAROON);
-
             } break;
             case GAME:
             {
@@ -172,14 +161,11 @@ int main(void)
     return 0;
 }
 
-Camera SwitchCameraType(GameState currentGameState)
-{
+Camera SwitchCameraType(GameState currentGameState) {
     Camera tempCamera = { 0 };
 
-    switch (currentGameState)
-    {
-        case TITLE:
-        {
+    switch (currentGameState) {
+        case TITLE: {
             tempCamera.position = { 16.0f, 16.0f, 16.0f };     // Camera position
             tempCamera.target = { 0.0f, 0.0f, 0.0f };          // Camera looking at point
             tempCamera.up = { 0.0f, 1.0f, 0.0f };              // Camera up vector (rotation towards target)
@@ -187,9 +173,8 @@ Camera SwitchCameraType(GameState currentGameState)
             //tempCamera.projection = CAMERA_PERSPECTIVE;                 // Camera projection type
 
         } break;
-        case GAME:
-        {
-            tempCamera.position = { 16.0f, 16.0f, 16.0f };     // Camera position
+        case GAME: {
+            tempCamera.position = { 8.0f, 16.0f, 0 };     // Camera position
             tempCamera.target = { 0.0f, 0.0f, 0.0f };          // Camera looking at point
             tempCamera.up = { 0.0f, 1.0f, 0.0f };              // Camera up vector (rotation towards target)
             tempCamera.fovy = 45.0f;                                    // Camera field-of-view Y
@@ -201,29 +186,21 @@ Camera SwitchCameraType(GameState currentGameState)
     return tempCamera;
 }
 
-static void InitPlayerCharacter()
-{
-    
-}
+
 
 /*
 Gets given height maps spawn points and recolors the map for cubic mesh generation
 */
-static Level GetLevelData(Image heightMap, Color playerSpawnPointColor, Color enemySpawnPointColor)
-{
+static Level GetLevelData(Image heightMap, Color playerSpawnPointColor, Color enemySpawnPointColor) {
     Level tempLevelData;
 
     // Check spawning positions in the level
-    if ((tempLevelData.spawnPointPlayer.x == 0 && tempLevelData.spawnPointPlayer.y == 0) && (tempLevelData.spawnPointEnemy.x == 0 && tempLevelData.spawnPointEnemy.y == 0))
-    {
+    if ((tempLevelData.spawnPointPlayer.x == 0 && tempLevelData.spawnPointPlayer.y == 0) && (tempLevelData.spawnPointEnemy.x == 0 && tempLevelData.spawnPointEnemy.y == 0)) {
         for (int x = 0; x < heightMap.width; x++)
-        {
-            for (int y = 0; y < heightMap.height; y++)
-            {
+            for (int y = 0; y < heightMap.height; y++) {
                 Color pixelColor = GetImageColor(heightMap, x, y);
 
-                if (ColorToInt(pixelColor) == ColorToInt(playerSpawnPointColor))
-                {
+                if (ColorToInt(pixelColor) == ColorToInt(playerSpawnPointColor)) {
                     // Found a spawning point, calculate its 3D position with level position. Store its position. Casting int into float
 
                     tempLevelData.spawnPointPlayer = {
@@ -235,8 +212,7 @@ static Level GetLevelData(Image heightMap, Color playerSpawnPointColor, Color en
                     // When spawn point found recolor image back into BLACK so mesh generation later will find the spawn point as something the player can stand on. If the pixel is not Black or White the ground the mesh will have hole in the position where the spawn point is.
                     ImageDrawPixel(&heightMap, x, y, BLACK);
                 }
-                else if (ColorToInt(pixelColor) == ColorToInt(enemySpawnPointColor))
-                {
+                else if (ColorToInt(pixelColor) == ColorToInt(enemySpawnPointColor)) {
                     tempLevelData.spawnPointEnemy = {
                         (float(x) + tempLevelData.levelPosition.x),
                         (tempLevelData.levelPosition.y),
@@ -246,7 +222,6 @@ static Level GetLevelData(Image heightMap, Color playerSpawnPointColor, Color en
                     ImageDrawPixel(&heightMap, x, y, BLACK);
                 }
             }
-        }
         // TODO: Create error code here when a loaded map doesn't have spawn points for player and/or enemy.
     }
 
