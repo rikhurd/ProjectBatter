@@ -5,6 +5,9 @@ class Character {
         Vector3 characterLocation = {0,0,0};
         Mesh mesh;
         Model model;
+        float characterSpeed = 5.0f;
+
+        Color characterPHColor = GRAY;
 
         Character(const Vector3& characterSpawnLocation = { 0.0f, 0.0f, 0.0f });
         virtual void UpdateCharacter();
@@ -25,5 +28,6 @@ class PlayerCharacter : public Character {
 //--------------------------------------------------------------------------------------
 
 class EnemyCharacter : public Character {
-
+    public:
+        EnemyCharacter(const Vector3& characterSpawnLocation);
 };

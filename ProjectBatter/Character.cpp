@@ -2,6 +2,7 @@
 
 Character::Character(const Vector3& characterSpawnLocation) {
     characterLocation = characterSpawnLocation;
+    characterSpeed = 5.0f;
 }
 
 void Character::UpdateCharacter() {
@@ -20,19 +21,24 @@ void Character::DrawCharacter() {
 //--------------------------------------------------------------------------------------
 
 PlayerCharacter::PlayerCharacter(const Vector3& characterSpawnLocation) : Character(characterSpawnLocation) {
- 
+    characterPHColor = GREEN;
 
 }
 
 void PlayerCharacter::UpdateCharacter() {
-    /*
-    if (IsKeyDown(KEY_W));
+    float characterSpeedFrame = characterSpeed * GetFrameTime();
 
-        if (IsKeyDown(KEY_S));
-            if (IsKeyDown(KEY_A));
-                if (IsKeyDown(KEY_D));
-                */
+    if (IsKeyDown(KEY_W)) characterLocation.x -= characterSpeedFrame;
+    if (IsKeyDown(KEY_S))characterLocation.x += characterSpeedFrame;
+    if (IsKeyDown(KEY_A)) characterLocation.z += characterSpeedFrame;
+    if (IsKeyDown(KEY_D))characterLocation.z -= characterSpeedFrame;
+
 }
 
 // EnemyCharacter
 //--------------------------------------------------------------------------------------
+
+EnemyCharacter::EnemyCharacter(const Vector3& characterSpawnLocation) : Character(characterSpawnLocation) {
+    this->characterPHColor = RED;
+
+}

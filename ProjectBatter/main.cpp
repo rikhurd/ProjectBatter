@@ -36,7 +36,7 @@ struct LevelSpawnColors {
 // Function declaration
 static Level GetLevelData(Image heightMap, Color playerSpawnPointColor, Color enemySpawnPointColor);
 
-static Camera SwitchCameraType(GameState currentGameState);
+static Camera SwitchCameraType(GameState currentGameState, Vector3 cameraTargetPos = { 0.0f, 0.0f, 0.0f });
 
 int main(void) {
     // Initialization
@@ -81,6 +81,7 @@ int main(void) {
     UnloadImage(heightMap);     // Unload cubesmap image from RAM, already uploaded to VRAM
 
     std::unique_ptr<PlayerCharacter> player = std::make_unique<PlayerCharacter>(levelData.spawnPointPlayer);
+    std::unique_ptr<EnemyCharacter> enemy = std::make_unique<EnemyCharacter>(levelData.spawnPointEnemy);
 
     SetTargetFPS(60);                   // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -98,12 +99,13 @@ int main(void) {
                     currentGameState = GAME;
 
                     // Set new camera variables here so it would be called only once and not updated each frame
-                    camera = SwitchCameraType(currentGameState);
+                    camera = SwitchCameraType(currentGameState, player->characterLocation);
                     DisableCursor();
                 }
             } break;
             case GAME: {
                 UpdateCamera(&camera, CAMERA_THIRD_PERSON);
+                player->UpdateCharacter();
 
             } break;
             default: break;
@@ -122,9 +124,9 @@ int main(void) {
 
             DrawModel(levelData.levelModel, levelData.levelPosition, 1.0f, WHITE);
 
-            DrawCube(levelData.spawnPointPlayer, 1, 1, 1, GREEN);
+            player->DrawCharacter();
 
-            DrawCube(levelData.spawnPointEnemy, 1, 1, 1, RED);
+            enemy->DrawCharacter();
 
 
         EndMode3D();
@@ -161,7 +163,7 @@ int main(void) {
     return 0;
 }
 
-Camera SwitchCameraType(GameState currentGameState) {
+Camera SwitchCameraType(GameState currentGameState, Vector3 cameraTargetPos) {
     Camera tempCamera = { 0 };
 
     switch (currentGameState) {
@@ -175,7 +177,7 @@ Camera SwitchCameraType(GameState currentGameState) {
         } break;
         case GAME: {
             tempCamera.position = { 8.0f, 16.0f, 0 };     // Camera position
-            tempCamera.target = { 0.0f, 0.0f, 0.0f };          // Camera looking at point
+            tempCamera.target = cameraTargetPos;          // Camera looking at point
             tempCamera.up = { 0.0f, 1.0f, 0.0f };              // Camera up vector (rotation towards target)
             tempCamera.fovy = 45.0f;                                    // Camera field-of-view Y
             //tempCamera.projection = CAMERA_THIRD_PERSON;                 // Camera projection type
