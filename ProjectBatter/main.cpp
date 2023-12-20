@@ -12,6 +12,7 @@ typedef enum GameState { TITLE, GAME } GameState;
 typedef struct Level {
     Mesh levelMesh;
     Model levelModel;
+    BoundingBox levelBoundingBox;
     Vector3 spawnPointPlayer = { 0,0,0 };
     Vector3 spawnPointEnemy = { 0,0,0 };
     Vector3 levelPosition = { -8.0f, 0.0f, -8.0f };
@@ -123,9 +124,9 @@ int main(void) {
         BeginMode3D(camera);
 
             DrawModel(levelData.levelModel, levelData.levelPosition, 1.0f, WHITE);
+            DrawBoundingBox(levelData.levelBoundingBox, RED);
 
             player->DrawCharacter();
-
             enemy->DrawCharacter();
 
 
@@ -138,8 +139,8 @@ int main(void) {
             } break;
             case GAME:
             {
-
-
+                if (CheckCollisionBoxes(levelData.levelBoundingBox, player->characterBoundingBox)) player->SetColor(RED);
+                else  player->SetColor(GREEN);
             } break;
             default: break;
         }
@@ -195,6 +196,7 @@ Gets given height maps spawn points and recolors the map for cubic mesh generati
 */
 static Level GetLevelData(Image heightMap, Color playerSpawnPointColor, Color enemySpawnPointColor) {
     Level tempLevelData;
+    Vector3 levelCubeSize = {1.0f,1.0f,1.0f};
 
     // Check spawning positions in the level
     if ((tempLevelData.spawnPointPlayer.x == 0 && tempLevelData.spawnPointPlayer.y == 0) && (tempLevelData.spawnPointEnemy.x == 0 && tempLevelData.spawnPointEnemy.y == 0)) {
@@ -224,11 +226,22 @@ static Level GetLevelData(Image heightMap, Color playerSpawnPointColor, Color en
                     ImageDrawPixel(&heightMap, x, y, BLACK);
                 }
             }
-        // TODO: Create error code here when a loaded map doesn't have spawn points for player and/or enemy.
+        // TODO: Create error code here when a loaded map doesn't have spawn points for player or enemy.
     }
 
     tempLevelData.levelMesh = GenMeshCubicmap(heightMap, { 1.0f, 1.0f, 1.0f });
     tempLevelData.levelModel = LoadModelFromMesh(tempLevelData.levelMesh);
+    tempLevelData.levelBoundingBox = BoundingBox{
+        Vector3 {
+        tempLevelData.levelPosition.x - (levelCubeSize.x / 2),
+        0,
+        tempLevelData.levelPosition.z - (levelCubeSize.z / 2)
+        },
+        Vector3 {
+        tempLevelData.levelPosition.x + (heightMap.height) - (levelCubeSize.x / 2),
+        levelCubeSize.y,
+        tempLevelData.levelPosition.z + (heightMap.width) - (levelCubeSize.z / 2)
+        } };
 
     return tempLevelData;
 }

@@ -3,15 +3,20 @@
 class Character {
     public:
         Vector3 characterLocation = {0,0,0};
-        Mesh mesh;
-        Model model;
-        float characterSpeed = 5.0f;
+        Vector3 characterSize = { 1,1,1 };
+        Mesh characterMesh;
+        Model characterModel;
+        BoundingBox characterBoundingBox;
+        float characterSpeed = 6.0f;
 
         Color characterPHColor = GRAY;
 
         Character(const Vector3& characterSpawnLocation = { 0.0f, 0.0f, 0.0f });
         virtual void UpdateCharacter();
         virtual void DrawCharacter();
+
+        // PH Set function for testing BoundingBox overlapping
+        void SetColor(Color setColor);
 };
 
 // PlayerCharacter
